@@ -42,6 +42,16 @@ my $numa_fmt = {
         type => 'string',
         enum => [qw(preferred bind interleave)],
         description => "NUMA allocation policy.",
+        verbose_description => <<EODESC,
+NUMA allocation policy. Possible values are:
+
+ - preferred: prefer the given host node list for allocation
+ - bind: restrict memory allocation to the given host node list
+ - interleave: interleave memory allocations across the given host node list
+
+The models are explained in more details in the kernel's documentation
+https://docs.kernel.org/admin-guide/mm/numa_memory_policy.html#components-of-memory-policies.
+EODESC
         optional => 1,
     },
 };
