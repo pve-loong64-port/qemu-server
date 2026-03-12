@@ -132,7 +132,7 @@ my sub get_max_mem {
 
     $bits = $bits & ~1; # round down to nearest even as limit is lower with odd bit sizes
 
-    # heuristic: remove 20 bits to get MB and half that as QEMU needs some overhead
+    # heuristic: remove 20 bits to get MiB and half that as QEMU needs some overhead
     my $bits_to_max_mem = int(1 << ($bits - 21));
 
     return $bits_to_max_mem > 4 * 1024 * 1024 ? 4 * 1024 * 1024 : $bits_to_max_mem;
