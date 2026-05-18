@@ -204,7 +204,7 @@ int main() {
         eprintf("Error writing to file '" OUTPUT_PATH "': %s\n", strerror(errno));
     }
 
-    if (strncmp(vendor, "AuthenticAMD", 12) == 0) {
+    if (strncmp(vendor, "AuthenticAMD", strnlen(vendor, 12)) == 0) {
         cpu_caps_amd_sev_t caps_sev;
         query_cpu_capabilities_sev(&caps_sev);
 
@@ -222,7 +222,7 @@ int main() {
             caps_sev.sev_es_support ? "true" : "false",
             caps_sev.sev_snp_support ? "true" : "false"
         );
-    } else if (strncmp(vendor, "GenuineIntel", 12) == 0) {
+    } else if (strncmp(vendor, "GenuineIntel", strnlen(vendor, 12)) == 0) {
         cpu_caps_intel_tdx_t caps_tdx;
         if (query_cpu_capabilities_tdx(&caps_tdx) == 0) {
             ret = fprintf(file,
