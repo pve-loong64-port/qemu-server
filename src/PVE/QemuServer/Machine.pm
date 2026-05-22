@@ -123,6 +123,7 @@ sub print_machine {
 my $default_machines = {
     x86_64 => 'pc',
     aarch64 => 'virt',
+    loongarch64 => 'virt',
 };
 
 sub default_machine_for_arch {
