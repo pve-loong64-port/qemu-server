@@ -28,6 +28,7 @@ my $nodename = PVE::INotify::nodename();
 my $arch_to_qemu_binary = {
     aarch64 => '/usr/bin/qemu-system-aarch64',
     x86_64 => '/usr/bin/qemu-system-x86_64',
+    loongarch64 => '/usr/bin/qemu-system-loongarch64',
 };
 
 # wrapper around the Tools helper, having it here makes it easier to mock for testing
