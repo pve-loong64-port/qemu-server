@@ -29,7 +29,7 @@ our @EXPORT_OK = qw(
 my $arch_desc = {
     description => "Virtual processor architecture. Defaults to the host architecture.",
     type => 'string',
-    enum => [qw(x86_64 aarch64)],
+    enum => [qw(x86_64 aarch64 loongarch64)],
 };
 PVE::JSONSchema::register_standard_option("pve-qm-cpu-arch", $arch_desc);
 
@@ -84,6 +84,7 @@ my $builtin_models_by_arch = {
         },
     },
     aarch64 => {},
+    loongarch64 => {},
 };
 
 my $all_builtin_models;
@@ -108,6 +109,7 @@ my $cputypes_32bit = {
     'athlon' => 1,
     'kvm32' => 1,
     'qemu32' => 1,
+    'la132' => 1,
 };
 
 my $cpu_models_by_arch;
@@ -118,6 +120,7 @@ my $all_cpu_models;
 sub initialize_cpu_models {
     my $cpu_models_x86_64_file = '/usr/share/kvm/cpu-models-x86_64.json';
     my $cpu_models_aarch64_file = '/usr/share/kvm/cpu-models-aarch64.json';
+    my $cpu_models_loongarch64_file = '/usr/share/kvm/cpu-models-loongarch64.json';
 
     if (-f $cpu_models_x86_64_file) { # QEMU package is new enough to ship static model files
         my $json_text = PVE::File::file_get_contents($cpu_models_x86_64_file);
@@ -129,6 +132,11 @@ sub initialize_cpu_models {
         ($json_text) = $json_text =~ /(.*)/s; # untaint multi-line string
         $cpu_models_by_arch->{'aarch64'} = eval { decode_json($json_text) }
             or die "unable to decode contents of '$cpu_models_aarch64_file' - $@\n";
+
+        $json_text = PVE::File::file_get_contents($cpu_models_loongarch64_file);
+        ($json_text) = $json_text =~ /(.*)/s; # untaint multi-line string
+        $cpu_models_by_arch->{'loongarch64'} = eval { decode_json($json_text) }
+            or die "unable to decode contents of '$cpu_models_loongarch64_file' - $@\n";
     } else { # FIXME: MAJOR VERSION: remove hard-coded list
         $cpu_models_by_arch = {
             x86_64 => {
@@ -240,6 +248,11 @@ sub initialize_cpu_models {
                 'neoverse-n2' => 'ARM',
                 'neoverse-v1' => 'ARM',
                 # 32 bit and deprecated models were not added
+                max => 'default',
+            },
+            loongarch64 => {
+                la132 => 'Loongson',
+                la464 => 'Loongson',
                 max => 'default',
             },
         };
@@ -1112,6 +1125,7 @@ sub get_default_cpu_type($arch, $kvm) {
 
     my $cputype = $kvm ? 'kvm64' : 'qemu64';
     $cputype = 'cortex-a57' if $arch eq 'aarch64';
+    $cputype = 'la464' if $arch eq 'loongarch64';
 
     return $cputype;
 }
@@ -1141,7 +1155,7 @@ sub get_cpu_bitness($cpu_prop_str, $arch = undef) {
         }
     }
 
-    return $cputypes_32bit->{$cputype} ? 32 : 64 if $arch eq 'x86_64';
+    return $cputypes_32bit->{$cputype} ? 32 : 64 if ($arch eq 'x86_64' || $arch eq 'loongarch64');
     return 64 if $arch eq 'aarch64';
 
     die "unsupported architecture '$arch'\n";
