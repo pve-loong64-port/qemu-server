@@ -82,6 +82,7 @@ my $supported_vm_specific_cpu_flags_by_arch = {
         },
     ],
     aarch64 => [],
+    loongarch64 => [],
 };
 
 my $all_supported_vm_specific_cpu_flags = {};
@@ -253,7 +254,7 @@ sub query_available_cpu_flags($accel, $vm_specific, $arch) {
     # TODO: a way to get supported flags for aarch64. This is not done because PVE
     # does not currently ship a list of understood flags for aarch64, as it's more difficult
     # to obtain during QEMU build - for x86_64, qemu -cpu help will just list the flags.
-    return [] if $arch eq 'aarch64';
+    return [] if ($arch eq 'aarch64' || $arch eq 'loongarch64');
 
     my $descriptions = flag_descriptions($arch);
     my $base =
