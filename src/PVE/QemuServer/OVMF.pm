@@ -53,6 +53,11 @@ my $OVMF = {
             "$EDK2_FW_BASE/AAVMF_CODE.fd", "$EDK2_FW_BASE/AAVMF_VARS.fd",
         ],
     },
+    loongarch64 => {
+        default => [
+            "$EDK2_FW_BASE/LOONGARCH_VIRT_CODE.fd", "$EDK2_FW_BASE/LOONGARCH_VIRT_VARS.fd",
+        ],
+    },
 };
 
 my $temporary_efidisk_dir = '/run/qemu-server/efidisk';
