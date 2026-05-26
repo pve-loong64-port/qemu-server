@@ -56,6 +56,7 @@ Depends: conntrack,
          proxmox-websocket-tunnel,
          pve-cluster,
          pve-edk2-firmware-aarch64 [arm64],
+         pve-edk2-firmware-loongarch [loong64],
 # TODO: make legacy edk2 optional (suggests) for PVE 9 and warn explicitly about it
          pve-edk2-firmware-legacy [amd64] | pve-edk2-firmware (<< 4~) [amd64],
          pve-edk2-firmware-ovmf (>= 4.2025.05-2) [amd64],
@@ -76,6 +77,7 @@ Suggests: proxmox-firewall (>= 1.1.1),
           pve-edk2-firmware-aarch64 [!arm64],
           pve-edk2-firmware-ovmf [!amd64],
           pve-edk2-firmware-riscv,
+          pve-edk2-firmware-loong64 [!loong64],
 Breaks: pve-ha-manager (<< 4.0.1), pve-manager (<= 6.0-13),
 Description: Qemu Server Tools
  This package contains the Qemu Server tools used by Proxmox VE
