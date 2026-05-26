@@ -55,7 +55,7 @@ my $OVMF = {
     },
     loongarch64 => {
         default => [
-            "$EDK2_FW_BASE/LOONGARCH_VIRT_CODE.fd", "$EDK2_FW_BASE/LOONGARCH_VIRT_VARS.fd",
+            "$EDK2_FW_BASE/LOONGARCH_CODE.fd", "$EDK2_FW_BASE/LOONGARCH_VARS.fd",
         ],
     },
 };
