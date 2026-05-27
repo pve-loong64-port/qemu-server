@@ -17,7 +17,7 @@ __PACKAGE__->register_method({
     method => 'GET',
     description =>
         "List of available VM-specific CPU flags. Returns an empty list for 'aarch64' "
-        . "as no VM-specific flags are defined for it yet.",
+        . " and 'loongarch64' as no VM-specific flags are defined for it yet.",
     permissions => { user => 'all' },
     parameters => {
         additionalProperties => 0,
