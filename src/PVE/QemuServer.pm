@@ -1185,7 +1185,7 @@ sub print_tabletdevice_full {
 
     # we use uhci for old VMs because tablet driver was buggy in older qemu
     my $usbbus;
-    if ($q35 || $arch eq 'aarch64') {
+    if ($q35 || $arch eq 'aarch64' || $arch eq 'loongarch64') {
         $usbbus = 'ehci';
     } else {
         $usbbus = 'uhci';
@@ -1197,7 +1197,7 @@ sub print_tabletdevice_full {
 sub print_keyboarddevice_full {
     my ($conf, $arch) = @_;
 
-    return if $arch ne 'aarch64';
+    return if ($arch ne 'aarch64' && $arch ne 'loongarch64');
 
     return "usb-kbd,id=keyboard,bus=ehci.0,port=2";
 }
@@ -1486,7 +1486,7 @@ sub print_vga_device {
     my ($conf, $vga, $arch, $machine_version, $id, $qxlnum, $bridges) = @_;
 
     my $type = $vga_map->{ $vga->{type} };
-    if ($arch eq 'aarch64' && defined($type) && $type eq 'virtio-vga') {
+    if (($arch eq 'aarch64' || $arch eq 'loongarch64') && defined($type) && $type eq 'virtio-vga') {
         $type = 'virtio-gpu';
     }
     my $vgamem_mb = $vga->{memory};
@@ -3064,7 +3064,7 @@ my sub get_vga_properties {
     $vga->{type} = 'qxl' if $qxlnum;
 
     if (!$vga->{type}) {
-        if ($arch eq 'aarch64') {
+        if ($arch eq 'aarch64' || $arch eq 'loongarch64') {
             $vga->{type} = 'virtio';
         } elsif (min_version($machine_version, 2, 9)) {
             $vga->{type} = (!$winversion || $winversion >= 6) ? 'std' : 'cirrus';
@@ -3310,7 +3310,9 @@ sub config_to_command {
             # On aarch64, serial0 is the UART device. QEMU only allows
             # connecting UART devices via the '-serial' command line, as
             # the device has a fixed slot on the hardware...
-            if ($arch eq 'aarch64' && $i == 0) {
+            #
+            # isa-serial device is not available on loongarch64.
+            if (($arch eq 'aarch64' && $i == 0) || $arch eq 'loongarch64') {
                 push @$devices, '-serial', "chardev:serial$i";
             } else {
                 push @$devices, '-device', "isa-serial,chardev=serial$i";
@@ -4711,10 +4713,11 @@ sub vmconfig_hotplug_pending {
                 if ($defaults->{tablet}) {
                     vm_deviceplug($storecfg, $conf, $vmid, 'tablet', $arch, $machine_type);
                     vm_deviceplug($storecfg, $conf, $vmid, 'keyboard', $arch, $machine_type)
-                        if $arch eq 'aarch64';
+                        if ($arch eq 'aarch64' || $arch eq 'loongarch64');
                 } else {
                     vm_deviceunplug($vmid, $conf, 'tablet');
-                    vm_deviceunplug($vmid, $conf, 'keyboard') if $arch eq 'aarch64';
+                    vm_deviceunplug($vmid, $conf, 'keyboard')
+                        if ($arch eq 'aarch64' || $arch eq 'loongarch64');
                 }
             } elsif ($opt =~ m/^usb(\d+)$/) {
                 my $index = $1;
@@ -4782,10 +4785,11 @@ sub vmconfig_hotplug_pending {
                 if ($value == 1) {
                     vm_deviceplug($storecfg, $conf, $vmid, 'tablet', $arch, $machine_type);
                     vm_deviceplug($storecfg, $conf, $vmid, 'keyboard', $arch, $machine_type)
-                        if $arch eq 'aarch64';
+                        if ($arch eq 'aarch64' || $arch eq 'loongarch64');
                 } elsif ($value == 0) {
                     vm_deviceunplug($vmid, $conf, 'tablet');
-                    vm_deviceunplug($vmid, $conf, 'keyboard') if $arch eq 'aarch64';
+                    vm_deviceunplug($vmid, $conf, 'keyboard')
+                        if ($arch eq 'aarch64' || $arch eq 'loongarch64');
                 }
             } elsif ($opt =~ m/^usb(\d+)$/) {
                 my $index = $1;
