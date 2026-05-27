@@ -125,7 +125,7 @@ sub get_default_usb_bus {
     my $q35 = PVE::QemuServer::Machine::machine_type_is_q35($conf);
 
     # we use uhci for old VMs because tablet driver was buggy in older qemu
-    return $q35 || $arch eq 'aarch64' ? 'ehci' : 'uhci';
+    return $q35 || $arch eq 'aarch64' || $arch eq 'loongarch64' ? 'ehci' : 'uhci';
 }
 
 sub get_usb_controllers {
@@ -142,7 +142,7 @@ sub get_usb_controllers {
         && ($ostype eq 'l26' || windows_version($ostype) > 7);
     my $is_q35 = PVE::QemuServer::Machine::machine_type_is_q35($conf);
 
-    if ($arch eq 'aarch64') {
+    if ($arch eq 'aarch64' || $arch eq 'loongarch64') {
         $pciaddr = print_pci_addr('ehci', $arch);
         push @$devices, '-device', "usb-ehci,id=ehci$pciaddr";
     } elsif (!$is_q35) {
@@ -161,7 +161,7 @@ sub get_usb_controllers {
         $use_usb2 = 1 if !$d->{usb3};
     }
 
-    if (!$use_qemu_xhci && !$is_q35 && $use_usb2 && $arch ne 'aarch64') {
+    if (!$use_qemu_xhci && !$is_q35 && $use_usb2 && $arch ne 'aarch64' && $arch ne 'loongarch64') {
         # include usb device config if still on x86 before-xhci machines and if USB 3 is not used
         push @$devices, '-readconfig', '/usr/share/qemu-server/pve-usb.cfg';
     }
