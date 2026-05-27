@@ -1708,6 +1708,7 @@ __PACKAGE__->register_method({
                     if (
                         (!defined($conf->{vmgenid}) || $conf->{vmgenid} eq '1')
                         && $arch ne 'aarch64'
+                        && $arch ne 'loongarch64'
                     ) {
                         $conf->{vmgenid} = PVE::QemuServer::generate_uuid();
                     }
