@@ -79,6 +79,8 @@ static inline void cpu_vendor(char vendor[13]) {
         case 0xC0: strcpy(vendor, "Ampere"); break;
         default: snprintf(vendor, 13, "ARM64:%02x", implementer); break;
     }
+#elif defined(__loongarch__)
+    strcpy(vendor, "Loongson");
 #else
     strcpy(vendor, "Unknown");
 #endif
