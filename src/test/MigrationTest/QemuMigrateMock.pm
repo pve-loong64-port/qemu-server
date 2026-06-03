@@ -144,6 +144,14 @@ my sub common_mirror_mock {
     file_set_contents("${RUN_DIR_PATH}/nbd_info", to_json($nbd_info));
 }
 
+my $qemu_server_module = Test::MockModule->new("PVE::QemuServer");
+$qemu_server_module->mock(
+    get_running_qemu_version => sub {
+        my ($vmid) = @_;
+        return "11.0";
+    },
+);
+
 my $qemu_server_blockjob_module = Test::MockModule->new("PVE::QemuServer::BlockJob");
 $qemu_server_blockjob_module->mock(
     qemu_blockjobs_cancel => sub {
