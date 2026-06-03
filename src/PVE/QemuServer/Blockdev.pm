@@ -760,7 +760,12 @@ sub change_medium {
 
     my $machine_type = PVE::QemuServer::Machine::get_current_qemu_machine($vmid);
     # for the switch to -blockdev
-    if (PVE::QemuServer::Machine::is_machine_version_at_least($machine_type, 10, 0)) {
+    if (PVE::QemuServer::Machine::is_machine_version_at_least(
+        $machine_type,
+        PVE::QemuServer::get_running_qemu_version($vmid),
+        10,
+        0,
+    )) {
         blockdev_change_medium($storecfg, $vmid, $qdev_id, $drive);
     } else {
         # force eject if locked
@@ -807,7 +812,12 @@ sub set_io_throttle {
 
     my $machine_type = PVE::QemuServer::Machine::get_current_qemu_machine($vmid);
     # for the switch to -blockdev
-    if (PVE::QemuServer::Machine::is_machine_version_at_least($machine_type, 10, 0)) {
+    if (PVE::QemuServer::Machine::is_machine_version_at_least(
+        $machine_type,
+        PVE::QemuServer::get_running_qemu_version($vmid),
+        10,
+        0,
+    )) {
         mon_cmd(
             $vmid,
             'qom-set',

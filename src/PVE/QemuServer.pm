@@ -4076,7 +4076,12 @@ sub qemu_driveadd {
     my $machine_type = PVE::QemuServer::Machine::get_current_qemu_machine($vmid);
 
     # for the switch to -blockdev
-    if (PVE::QemuServer::Machine::is_machine_version_at_least($machine_type, 10, 0)) {
+    if (PVE::QemuServer::Machine::is_machine_version_at_least(
+        $machine_type,
+        get_running_qemu_version($vmid),
+        10,
+        0,
+    )) {
         PVE::QemuServer::Blockdev::attach($storecfg, $vmid, $device, {});
         return 1;
     } else {
@@ -4097,7 +4102,12 @@ sub qemu_drivedel {
     my $machine_type = PVE::QemuServer::Machine::get_current_qemu_machine($vmid);
 
     # for the switch to -blockdev
-    if (PVE::QemuServer::Machine::is_machine_version_at_least($machine_type, 10, 0)) {
+    if (PVE::QemuServer::Machine::is_machine_version_at_least(
+        $machine_type,
+        get_running_qemu_version($vmid),
+        10,
+        0,
+    )) {
         PVE::QemuServer::Blockdev::detach(vm_qmp_peer($vmid), "drive-$deviceid");
         return 1;
     } else {
@@ -4298,7 +4308,12 @@ sub qemu_cpu_hotplug {
 
     if ($vcpus < $currentvcpus) {
 
-        if (PVE::QemuServer::Machine::is_machine_version_at_least($machine_type, 2, 7)) {
+        if (PVE::QemuServer::Machine::is_machine_version_at_least(
+            $machine_type,
+            get_running_qemu_version($vmid),
+            2,
+            7,
+        )) {
 
             for (my $i = $currentvcpus; $i > $vcpus; $i--) {
                 qemu_devicedel($vmid, "cpu$i");
@@ -4326,7 +4341,12 @@ sub qemu_cpu_hotplug {
     die "vcpus in running vm does not match its configuration\n"
         if scalar(@{$currentrunningvcpus}) != $currentvcpus;
 
-    if (PVE::QemuServer::Machine::is_machine_version_at_least($machine_type, 2, 7)) {
+    if (PVE::QemuServer::Machine::is_machine_version_at_least(
+        $machine_type,
+        get_running_qemu_version($vmid),
+        2,
+        7,
+    )) {
         my $arch = PVE::QemuServer::Helpers::get_vm_arch($conf);
 
         for (my $i = $currentvcpus + 1; $i <= $vcpus; $i++) {
@@ -4368,7 +4388,12 @@ sub qemu_volume_snapshot {
         qmp_cmd($qmp_peer, 'blockdev-snapshot-internal-sync', device => $deviceid, name => $snap);
     } elsif ($do_snapshots_type eq 'external') {
         my $machine_version = PVE::QemuServer::Machine::get_current_qemu_machine($vmid);
-        if (!PVE::QemuServer::Machine::is_machine_version_at_least($machine_version, 10, 0)) {
+        if (!PVE::QemuServer::Machine::is_machine_version_at_least(
+            $machine_version,
+            get_running_qemu_version($vmid),
+            10,
+            0,
+        )) {
             die "storage for '$volid' is configured for snapshots as a volume chain - this requires"
                 . " QEMU machine version >= 10.0. See"
                 . " https://pve.proxmox.com/wiki/QEMU_Machine_Version_Upgrade\n";
@@ -4417,7 +4442,12 @@ sub qemu_volume_snapshot_delete {
         );
     } elsif ($do_snapshots_type eq 'external') {
         my $machine_version = PVE::QemuServer::Machine::get_current_qemu_machine($vmid);
-        if (!PVE::QemuServer::Machine::is_machine_version_at_least($machine_version, 10, 0)) {
+        if (!PVE::QemuServer::Machine::is_machine_version_at_least(
+            $machine_version,
+            get_running_qemu_version($vmid),
+            10,
+            0,
+        )) {
             die "storage for '$volid' is configured for snapshots as a volume chain - this requires"
                 . " QEMU machine version >= 10.0. See"
                 . " https://pve.proxmox.com/wiki/QEMU_Machine_Version_Upgrade\n";
@@ -7905,7 +7935,13 @@ my sub clone_disk_check_io_uring {
         # With the switch to -blockdev and blockdev-mirror, the aio setting will be changed on the
         # fly if not explicitly set.
         my $machine_type = PVE::QemuServer::Machine::get_current_qemu_machine($vmid);
-        return if PVE::QemuServer::Machine::is_machine_version_at_least($machine_type, 10, 0);
+        return
+            if PVE::QemuServer::Machine::is_machine_version_at_least(
+                $machine_type,
+                get_running_qemu_version($vmid),
+                10,
+                0,
+            );
 
         $src_uses_io_uring = storage_allows_io_uring_default($src_scfg, $cache_direct);
     }

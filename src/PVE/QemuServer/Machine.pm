@@ -309,10 +309,14 @@ sub machine_version_cmp {
 }
 
 sub is_machine_version_at_least {
-    my ($machine_type, $major, $minor, $pve) = @_;
+    my ($machine_type, $fallback_version, $major, $minor, $pve) = @_;
 
-    return PVE::QemuServer::Helpers::min_version(extract_version($machine_type), $major, $minor,
-        $pve);
+    return PVE::QemuServer::Helpers::min_version(
+        extract_version($machine_type, $fallback_version),
+        $major,
+        $minor,
+        $pve,
+    );
 }
 
 sub get_machine_pve_revisions {

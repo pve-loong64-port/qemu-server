@@ -528,7 +528,12 @@ sub mirror {
 
     # for the switch to -blockdev
     my $machine_type = PVE::QemuServer::Machine::get_current_qemu_machine($source->{vmid});
-    if (PVE::QemuServer::Machine::is_machine_version_at_least($machine_type, 10, 0)) {
+    if (PVE::QemuServer::Machine::is_machine_version_at_least(
+        $machine_type,
+        PVE::QemuServer::get_running_qemu_version($source->{vmid}),
+        10,
+        0,
+    )) {
         blockdev_mirror($source, $dest, $jobs, $completion, $options);
     } else {
         my $drive_id = PVE::QemuServer::Drive::get_drive_id($source->{drive});
