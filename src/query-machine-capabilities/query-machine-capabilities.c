@@ -18,6 +18,10 @@
 #endif
 #endif // __aarch64__
 
+#ifdef __loongarch__
+#include <sys/auxv.h>
+#endif
+
 #define eprintf(...) fprintf(stderr, __VA_ARGS__)
 
 #define OUTPUT_DIR "/run/qemu-server"
@@ -41,6 +45,10 @@ typedef struct {
     bool aes;
     bool sha2;
 } cpu_caps_arm_t;
+
+typedef struct {
+    bool lvz;
+} cpu_caps_loongarch_t;
 
 static inline void cpu_vendor(char vendor[13]) {
 #ifdef __x86_64__
@@ -78,7 +86,6 @@ static inline void cpu_vendor(char vendor[13]) {
         case 0x61: strcpy(vendor, "Apple"); break;
         case 0xC0: strcpy(vendor, "Ampere"); break;
         default: snprintf(vendor, 13, "ARM64:%02x", implementer); break;
-    }
 #elif defined(__loongarch__)
     strcpy(vendor, "Loongson");
 #else
@@ -166,6 +173,13 @@ void query_cpu_capabilities_arm(cpu_caps_arm_t *res) {
 }
 #endif
 
+#ifdef __loongarch__
+void query_cpu_capabilities_loongarch(cpu_caps_loongarch_t *res) {
+    unsigned long hwcaps = getauxval(AT_HWCAP);
+    res->lvz = (hwcaps & HWCAP_LOONGARCH_LVZ);
+}
+#endif
+
 int prepare_output_directory() {
     // Check that the directory exists and create it if it does not.
     struct stat statbuf;
@@ -249,6 +263,20 @@ int main() {
             vendor,
             caps_arm.aes ? "true" : "false",
             caps_arm.sha2 ? "true" : "false"
+        );
+    }
+#elif defined(__loongarch__)
+    else {
+        cpu_caps_loongarch_t caps_loongarch;
+        query_cpu_capabilities_loongarch(&caps_loongarch);
+
+        ret = fprintf(file,
+            " \"loongarch-caps\": {"
+            " \"vendor\": \"%s\","
+            " \"lvz\": %s"
+            " }",
+            vendor,
+            caps_loongarch.lvz ? "true" : "false"
         );
     }
 #endif
