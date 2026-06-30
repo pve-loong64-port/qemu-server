@@ -5685,6 +5685,11 @@ sub vm_start_nolock {
         PVE::Storage::activate_volumes($storecfg, $vollist, undef, $storage_hints);
 
         check_efi_vars($storecfg, $vmid, $conf) if $conf->{bios} && $conf->{bios} eq 'ovmf';
+        if (exists($conf->{kvm}) && !$conf->{kvm}) {
+            log_warn(
+                "KVM hardware virtualization is disabled! Your virtual machine may suffer from\n"
+                    . "poor performance.");
+        }
 
         # Note that for certain cases like templates, the configuration is minimized, so need to ensure
         # the rest of the function here uses the same configuration that was used to build the command
