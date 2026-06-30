@@ -5675,6 +5675,11 @@ sub vm_start_nolock {
         PVE::Storage::activate_volumes($storecfg, $vollist, undef, $storage_hints);
 
         check_efi_vars($storecfg, $vmid, $conf) if $conf->{bios} && $conf->{bios} eq 'ovmf';
+        if (exists($conf->{kvm}) && !$conf->{kvm}) {
+            log_warn(
+                "KVM hardware virtualization is disabled! Your virtual machine may suffer from\n"
+                    . "poor performance.");
+        }
 
         PVE::QemuServer::Drive::warn_about_virtio_win_issues_in_config($conf);
 
