@@ -20,6 +20,7 @@ our @EXPORT_OK = qw(
     print_cpu_device
     get_cpu_options
     get_cpu_bitness
+    is_virtualization_supported_by_cpu
     is_native_arch
     get_amd_sev_object
     get_intel_tdx_object
@@ -666,7 +667,9 @@ sub print_cpu_device($conf, $arch, $id) {
     # FIXME: hot plugging other architectures like our unofficial aarch64 support?
     die "Hotplug of non x86_64 CPU not yet supported" if $arch ne 'x86_64';
 
-    my $kvm = $conf->{kvm} // is_native_arch($arch);
+    my $host_arch = get_host_arch();
+    my $kvm = $conf->{kvm}
+        // ($arch eq $host_arch && is_virtualization_supported_by_cpu($host_arch));
     my $cpu = get_default_cpu_type('x86_64', $kvm);
     if (my $cputype = $conf->{cpu}) {
         my $cpuconf = PVE::JSONSchema::parse_property_string('pve-vm-cpu-conf', $cputype)
@@ -1241,6 +1244,19 @@ sub get_amd_sev_object($amd_sev, $bios) {
     $sev_mem_object .= ',policy=' . sprintf("%#x", $policy);
     $sev_mem_object .= ',kernel-hashes=on' if ($amd_sev_conf->{'kernel-hashes'});
     return $sev_mem_object;
+}
+
+sub is_virtualization_supported_by_cpu($arch) {
+    # FIXME: assuming virtualization is supported on x86_64 and aarch64
+    if ($arch eq 'loongarch64') {
+        if (get_hw_capabilities()->{'loongarch-caps'}->{'lvz'}) {
+            return 1;
+        } else {
+            return 0;
+        }
+    } else {
+        return 1;
+    }
 }
 
 sub get_quote_generation_socket($conf) {

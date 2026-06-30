@@ -64,6 +64,7 @@ use PVE::QemuServer::CPUConfig qw(
     print_cpu_device
     get_cpu_options
     get_cpu_bitness
+    is_virtualization_supported_by_cpu
     is_native_arch
     get_amd_sev_object
     get_intel_tdx_object
@@ -2961,7 +2962,10 @@ sub query_supported_cpu_flags {
 
     my $flags = {};
 
-    my $kvm_supported = defined(kvm_version()) && $arch eq $host_arch;
+    my $kvm_supported =
+        defined(kvm_version())
+        && $arch eq $host_arch
+        && is_virtualization_supported_by_cpu($host_arch);
     my $qemu_cmd = PVE::QemuServer::Helpers::get_command_for_arch($arch);
     my $fakevmid = -1;
     my $pidfile = PVE::QemuServer::Helpers::vm_pidfile_name($fakevmid);
@@ -3130,7 +3134,8 @@ sub config_to_command {
 
     my $machine_type = PVE::QemuServer::Machine::get_vm_machine($conf, $forcemachine);
     my $machine_version = extract_version($machine_type, $kvmver);
-    $kvm //= 1 if is_native_arch($arch);
+    my $host_arch = get_host_arch();
+    $kvm //= 1 if ($arch eq $host_arch && is_virtualization_supported_by_cpu($host_arch));
 
     $machine_version =~ m/(\d+)\.(\d+)/;
     my ($machine_major, $machine_minor) = ($1, $2);
