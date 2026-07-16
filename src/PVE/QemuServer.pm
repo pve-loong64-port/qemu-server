@@ -1475,21 +1475,29 @@ sub print_netdev_full {
     return $netdev;
 }
 
-my $vga_map = {
-    'cirrus' => 'cirrus-vga',
-    'std' => 'VGA',
-    'vmware' => 'vmware-svga',
-    'virtio' => 'virtio-vga',
-    'virtio-gl' => 'virtio-vga-gl',
-};
+sub map_vga_model {
+    my ($vga_type, $arch) = @_;
+    my $vga_map = {
+        'cirrus' => 'cirrus-vga',
+        'std' => 'VGA',
+        'vmware' => 'vmware-svga',
+    };
+
+    if ($arch eq 'x86_64') {
+        $vga_map->{'virtio'} = 'virtio-vga';
+        $vga_map->{'virtio-gl'} = 'virtio-vga-gl';
+    } elsif ($arch eq 'aarch64') {
+        $vga_map->{'virtio'} = 'virtio-gpu';
+        $vga_map->{'virtio-gl'} = 'virtio-gpu-gl';
+    }
+
+    return $vga_map->{$vga_type};
+}
 
 sub print_vga_device {
     my ($conf, $vga, $arch, $machine_version, $id, $qxlnum, $bridges) = @_;
 
-    my $type = $vga_map->{ $vga->{type} };
-    if ($arch eq 'aarch64' && defined($type) && $type eq 'virtio-vga') {
-        $type = 'virtio-gpu';
-    }
+    my $type = map_vga_model($vga->{type}, $arch);
     my $vgamem_mb = $vga->{memory};
 
     my $max_outputs = '';
