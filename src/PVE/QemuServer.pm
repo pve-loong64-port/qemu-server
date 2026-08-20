@@ -7091,6 +7091,11 @@ sub restore_proxmox_backup_archive {
                 push @$pbs_restore_cmd, '--skip-zero';
             }
 
+            # TODO: extending this needs a separate rationale, the amplification
+            # avoided here is specific to the volblock layout
+            my $target_scfg = PVE::Storage::storage_config($storecfg, $d->{storeid});
+            push @$pbs_restore_cmd, '--no-cache' if $target_scfg->{type} eq 'zfspool';
+
             my $dbg_cmdstring = PVE::Tools::cmd2string($pbs_restore_cmd);
             print "restore proxmox backup image: $dbg_cmdstring\n";
             run_command($pbs_restore_cmd);
