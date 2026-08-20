@@ -7672,10 +7672,18 @@ sub restore_vma_archive {
             }
 
             my $path = PVE::Storage::path($cfg, $volid);
+            my $scfg = PVE::Storage::storage_config($cfg, $storeid);
 
-            print $fifofh "${map_opts}format=$d->{format}:${write_zeros}:$d->{devname}=$path\n";
+            # TODO: extending this needs a separate rationale, the amplification
+            # avoided here is specific to the volblock layout
+            my $cache_none = $scfg->{type} eq 'zfspool' ? ':cache=none' : '';
 
-            print "map '$d->{devname}' to '$path' (write zeros = ${write_zeros})\n";
+            print $fifofh
+                "${map_opts}format=$d->{format}${cache_none}:${write_zeros}:$d->{devname}=$path\n";
+
+            my $cache_info = $cache_none ? ', cache = none' : '';
+            print
+                "map '$d->{devname}' to '$path' (write zeros = ${write_zeros}${cache_info})\n";
         }
 
         $fh->seek(0, 0) || die "seek failed - $!\n";
