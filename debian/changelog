@@ -1,3 +1,16 @@
+qemu-server (9.2.7) trixie; urgency=medium
+
+  * restore: bypass the host page cache when restoring to a ZFS zvol, both for
+    Proxmox Backup Server and for VMA (vzdump) backups. Page writeback hands
+    the restored data to the zvol one page at a time, which forces a
+    read-modify-write of the surrounding volume block and can stall the I/O of
+    other ZFS-backed guests for the duration of the restore.
+
+  * d/control: depend on pve-qemu-kvm >= 11.0.3-3, which provides the
+    pbs-restore option needed to skip the page cache on restore.
+
+ -- Proxmox Support Team <support@proxmox.com>  Sat, 22 Aug 2026 18:41:15 +0200
+
 qemu-server (9.2.6) trixie; urgency=medium
 
   * cloud-init: commit: activate volume early enough to fix regression with
