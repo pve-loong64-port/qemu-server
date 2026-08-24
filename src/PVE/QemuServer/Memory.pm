@@ -432,7 +432,10 @@ sub config {
 
                 my $hostnodes = print_numa_hostnodes($hostnodelists);
 
-                # policy
+                # policy - note that the value 'default' is not exposed, because it can't be used in
+                # combination with host-nodes:
+                # > kvm: host-nodes must be empty for policy default, or you should explicitly
+                # > specify a policy other than default
                 my $policy = $numa->{policy};
                 die "you need to define a policy for hostnode $hostnodes\n" if !$policy;
                 $mem_object .= ",host-nodes=$hostnodes,policy=$policy";
