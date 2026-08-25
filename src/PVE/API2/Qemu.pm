@@ -818,6 +818,7 @@ my $hwtypeoptions = {
     'watchdog' => 1,
     'audio0' => 1,
     'rng0' => 1,
+    'pvpanic' => 1,
 };
 
 my $generaloptions = {
