@@ -740,6 +740,13 @@ EODESCR
         optional => 1,
         default => 1,
     },
+    pvpanic0 => {
+        optional => 1,
+        type => 'string',
+        description => "Configure a pvpanic device to monitor guest panics",
+        enum => [qw(pvpanic pvpanic-pci)],
+        default => undef,
+    },
 };
 
 my $cicustom_fmt = {
@@ -3431,6 +3438,18 @@ sub config_to_command {
     } else {
         push @$cmd, '-vga', 'none' if $vga->{type} eq 'none';
         push @$cmd, '-nographic';
+    }
+
+    my $pvpanic = $conf->{pvpanic0};
+    if (defined($pvpanic)) {
+        if ($pvpanic eq 'pvpanic') {
+            push @$devices, '-device', $pvpanic;
+        } elsif ($pvpanic eq 'pvpanic-pci') {
+            my $pvpanicpciaddr = print_pci_addr("pvpanic0", $bridges, $arch);
+            push @$devices, '-device', "$pvpanic,id=pvpanic$pvpanicpciaddr";
+        } else {
+            die "unknown pvpanic device type $pvpanic";
+        }
     }
 
     # For now, handles only specific parts, but the final goal is to cover everything.
