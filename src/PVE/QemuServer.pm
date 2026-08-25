@@ -141,6 +141,23 @@ sub nodename {
     return $nodename_cache;
 }
 
+my $pvpanic_fmt = {
+    enabled => {
+        default_key => 1,
+        type => 'boolean',
+        description => "Create a pvpanic device to monitor guest panics.",
+        default => 0,
+    },
+    action => {
+        type => 'string',
+        enum => [qw(none pause shutdown exit-failure)],
+        description =>
+            "The action to perform if the guest panics.",
+        optional => 1,
+    },
+};
+PVE::JSONSchema::register_format('pve-qm-pvpanic', $pvpanic_fmt);
+
 my $watchdog_fmt = {
     model => {
         default_key => 1,
@@ -738,6 +755,12 @@ EODESCR
             . " Merging).",
         optional => 1,
         default => 1,
+    },
+    pvpanic => {
+        optional => 1,
+        type => 'string',
+        format => 'pve-qm-pvpanic',
+        description => "Create a panic monitor device.",
     },
 };
 
@@ -1673,6 +1696,16 @@ sub print_smbios1 {
 }
 
 PVE::JSONSchema::register_format('pve-qm-smbios1', $smbios1_fmt);
+
+sub parse_pvpanic {
+    my ($value) = @_;
+
+    return if !$value;
+
+    my $res = eval { parse_property_string($pvpanic_fmt, $value) };
+    warn $@ if $@;
+    return $res;
+}
 
 sub parse_watchdog {
     my ($value) = @_;
@@ -3554,6 +3587,15 @@ sub config_to_command {
         my $ballooncmd = "virtio-balloon-pci,id=balloon0$pciaddr";
         $ballooncmd .= ",free-page-reporting=on" if min_version($machine_version, 6, 2);
         push @$devices, '-device', $ballooncmd;
+    }
+
+    if ($conf->{pvpanic}) {
+        my $pvpanicopts = parse_pvpanic($conf->{pvpanic});
+        if ($pvpanicopts->{enabled}) {
+            my $pvpanicpciaddr = print_pci_addr("pvpanic", $arch);
+            push @$devices, '-device', "pvpanic-pci,id=pvpanic$pvpanicpciaddr";
+        }
+        push @$devices, '-action', "panic=$pvpanicopts->{action}" if $pvpanicopts->{action};
     }
 
     if ($conf->{watchdog}) {
