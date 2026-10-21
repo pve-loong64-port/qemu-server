@@ -1167,7 +1167,7 @@ sub print_tabletdevice_full {
 sub print_keyboarddevice_full {
     my ($conf, $arch) = @_;
 
-    return if $arch ne 'aarch64';
+    return if ($arch ne 'aarch64' && $arch ne 'loongarch64');
 
     return "usb-kbd,id=keyboard,bus=ehci.0,port=2";
 }
@@ -1458,10 +1458,20 @@ my $vga_map_aarch64 = {
     'virtio-gl' => 'virtio-gpu-gl',
 };
 
+# QEMU builds only the non-VGA variants of the virtio GPU for loongarch64
+my $vga_map_loongarch64 = {
+    $vga_map->%*,
+    'virtio' => 'virtio-gpu',
+    'virtio-gl' => 'virtio-gpu-gl',
+};
+
 my sub map_vga_model {
     my ($vga_type, $arch) = @_;
 
-    return $arch eq 'aarch64' ? $vga_map_aarch64->{$vga_type} : $vga_map->{$vga_type};
+    return
+        $arch eq 'aarch64' ? $vga_map_aarch64->{$vga_type}
+        : $arch eq 'loongarch64' ? $vga_map_loongarch64->{$vga_type}
+        : $vga_map->{$vga_type};
 }
 
 sub print_vga_device {
@@ -2818,14 +2828,14 @@ sub get_tpm_paths {
     };
 }
 
-# The aarch64 virt machine only provides a TPM TIS device, which QEMU only describes to the guest
-# as TPM 2.0, and the aarch64 EDK2 firmware has no TPM 1.2 support either.
+# The aarch64/loongarch64 virt machine only provides a TPM TIS device, which QEMU only describes to
+# the guest as TPM 2.0, and the aarch64 EDK2 firmware has no TPM 1.2 support either.
 sub assert_tpm_version_supported {
     my ($version, $arch) = @_;
 
     $version //= 'v1.2';
     die "TPM version '$version' is not supported for the '$arch' architecture, use 'v2.0'\n"
-        if $arch eq 'aarch64' && $version ne 'v2.0';
+        if ($arch eq 'aarch64' || $arch eq 'loongarch64') && $version ne 'v2.0';
 
     return;
 }
@@ -2839,7 +2849,7 @@ sub add_tpm_device {
     assert_tpm_version_supported($tpm->{version}, $arch);
 
     my $paths = get_tpm_paths($vmid);
-    my $model = $arch eq 'aarch64' ? 'tpm-tis-device' : 'tpm-tis';
+    my $model = ($arch eq 'aarch64' || $arch eq 'loongarch64') ? 'tpm-tis-device' : 'tpm-tis';
 
     push @$devices, "-chardev", "socket,id=tpmchar,path=$paths->{socket}";
     push @$devices, "-tpmdev", "emulator,id=tpmdev,chardev=tpmchar";
@@ -3076,7 +3086,7 @@ my sub get_vga_properties {
     $vga->{type} = 'qxl' if $qxlnum;
 
     if (!$vga->{type}) {
-        if ($arch eq 'aarch64') {
+        if ($arch eq 'aarch64' || $arch eq 'loongarch64') {
             $vga->{type} = 'virtio';
         } elsif (min_version($machine_version, 2, 9)) {
             $vga->{type} = (!$winversion || $winversion >= 6) ? 'std' : 'cirrus';
@@ -3325,7 +3335,9 @@ sub config_to_command {
             # On aarch64, serial0 is the UART device. QEMU only allows
             # connecting UART devices via the '-serial' command line, as
             # the device has a fixed slot on the hardware...
-            if ($arch eq 'aarch64' && $i == 0) {
+            #
+            # isa-serial device is not available on loongarch64.
+            if (($arch eq 'aarch64' && $i == 0) || $arch eq 'loongarch64') {
                 push @$devices, '-serial', "chardev:serial$i";
             } else {
                 push @$devices, '-device', "isa-serial,chardev=serial$i";
@@ -4544,7 +4556,7 @@ sub vmconfig_hotplug_pending {
                     vm_deviceplug(
                         $storecfg, $conf, $vmid, 'tablet', undef, $arch, $machine_type->(),
                     );
-                    if ($arch eq 'aarch64') {
+                    if ($arch eq 'aarch64' || $arch eq 'loongarch64') {
                         vm_deviceplug(
                             $storecfg,
                             $conf,
@@ -4557,7 +4569,8 @@ sub vmconfig_hotplug_pending {
                     }
                 } else {
                     vm_deviceunplug($vmid, $conf, 'tablet');
-                    vm_deviceunplug($vmid, $conf, 'keyboard') if $arch eq 'aarch64';
+                    vm_deviceunplug($vmid, $conf, 'keyboard')
+                        if ($arch eq 'aarch64' || $arch eq 'loongarch64');
                 }
             } elsif ($opt =~ m/^usb(\d+)$/) {
                 my $index = $1;
@@ -4626,7 +4639,7 @@ sub vmconfig_hotplug_pending {
                     vm_deviceplug(
                         $storecfg, $conf, $vmid, 'tablet', undef, $arch, $machine_type->(),
                     );
-                    if ($arch eq 'aarch64') {
+                    if ($arch eq 'aarch64' || $arch eq 'loongarch64') {
                         vm_deviceplug(
                             $storecfg,
                             $conf,
@@ -4639,7 +4652,8 @@ sub vmconfig_hotplug_pending {
                     }
                 } elsif ($value == 0) {
                     vm_deviceunplug($vmid, $conf, 'tablet');
-                    vm_deviceunplug($vmid, $conf, 'keyboard') if $arch eq 'aarch64';
+                    vm_deviceunplug($vmid, $conf, 'keyboard')
+                        if ($arch eq 'aarch64' || $arch eq 'loongarch64');
                 }
             } elsif ($opt =~ m/^usb(\d+)$/) {
                 my $index = $1;
