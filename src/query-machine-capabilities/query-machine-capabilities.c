@@ -48,6 +48,7 @@ typedef struct {
 
 typedef struct {
     bool lvz;
+    bool ptw;
 } cpu_caps_loongarch_t;
 
 static inline void cpu_vendor(char vendor[13]) {
@@ -177,6 +178,7 @@ void query_cpu_capabilities_arm(cpu_caps_arm_t *res) {
 void query_cpu_capabilities_loongarch(cpu_caps_loongarch_t *res) {
     unsigned long hwcaps = getauxval(AT_HWCAP);
     res->lvz = (hwcaps & HWCAP_LOONGARCH_LVZ);
+    res->ptw = (hwcaps & HWCAP_LOONGARCH_PTW);
 }
 #endif
 
@@ -278,10 +280,12 @@ int main() {
     ret = fprintf(file,
             " \"loongarch-caps\": {"
             " \"vendor\": \"%s\","
-            " \"lvz\": %s"
+            " \"lvz\": %s,"
+            " \"ptw\": %s"
             " }",
             vendor,
-            caps_loongarch.lvz ? "true" : "false"
+            caps_loongarch.lvz ? "true" : "false",
+            caps_loongarch.ptw ? "true" : "false"
             );
     if (ret < 0) {
         eprintf("Error writing to file '" OUTPUT_PATH "': %s\n", strerror(errno));
