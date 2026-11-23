@@ -1011,6 +1011,16 @@ sub get_cpu_options(
     check_phys_bits_above_40_compat($conf->{bios}, $cputype, $resolved_flags)
         if $using_phys_bits_above_40;
 
+    # KVM requires PTW to be enabled if the host has PTW, otherwise VMs may
+    # suffer from lockups or service boot failures. 'la464' by default does not
+    # support PTW, so we need to enable PTW manually when the host has the PTW
+    # feature enabled.
+    if ($kvm && $arch eq 'loongarch64' && $cputype eq 'la464') {
+        if (get_hw_capabilities()->{'loongarch-caps'}->{'ptw'}) {
+            $cpu_str .= ",ptw=on";
+        }
+    }
+
     return ('-cpu', $cpu_str);
 }
 
