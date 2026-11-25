@@ -35,6 +35,7 @@ Architecture: any
 Depends: conntrack,
          dbus,
          genisoimage,
+         lats [loong64],
          libclass-methodmaker-perl,
          libio-multiplex-perl,
          libjson-perl,
