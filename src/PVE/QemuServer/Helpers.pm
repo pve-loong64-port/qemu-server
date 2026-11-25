@@ -37,10 +37,20 @@ sub get_host_arch {
 
 sub get_command_for_arch($) {
     my ($arch) = @_;
-    return '/usr/bin/kvm' if get_host_arch() eq $arch; # i.e. native arch
 
-    my $cmd = $arch_to_qemu_binary->{$arch}
-        or die "don't know how to emulate architecture '$arch'\n";
+    my $host_arch = get_host_arch();
+
+    return '/usr/bin/kvm' if $host_arch eq $arch; # i.e. native arch
+
+    my $cmd = "";
+
+    if ($host_arch eq 'loongarch64' && $arch eq 'x86_64') {
+        $cmd = '/usr/bin/lats-x86_64';
+    } else {
+        $cmd = $arch_to_qemu_binary->{$arch}
+            or die "don't know how to emulate architecture '$arch'\n";
+    }
+
     return $cmd;
 }
 
@@ -70,6 +80,9 @@ sub kvm_user_version {
         my $line = shift;
         if ($line =~ m/^QEMU( PC)? emulator version (\d+\.\d+(\.\d+)?)(\.\d+)?[,\s]/) {
             $kvm_user_version->{$binary} = $2;
+        } elsif ($line =~ m/^LATX-SYS/) {
+            # LATX-SYS is based on QEMU 8.1.5
+            $kvm_user_version->{$binary} = '8.1.5';
         }
     };
 
@@ -157,7 +170,7 @@ sub parse_cmdline {
         my @param = split(/\0/, $line);
 
         my $cmd = $param[0];
-        return if !$cmd || ($cmd !~ m|kvm$| && $cmd !~ m@(?:^|/)qemu-[^/]+$@);
+        return if !$cmd || ($cmd !~ m|kvm$| && $cmd !~ m@(?:^|/)(qemu-|lats-)[^/]+$@);
 
         my $phash = {};
         my $pending_cmd;
