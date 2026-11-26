@@ -491,6 +491,12 @@ EODESC
         description => "Enable/disable KVM hardware virtualization.",
         default => 1,
     },
+    lats => {
+        optional => 1,
+        type => 'boolean',
+        description => "Enable/disable LoongArch binary translator.",
+        default => 0,
+    },
     tdf => {
         optional => 1,
         type => 'boolean',
@@ -3159,12 +3165,21 @@ sub config_to_command {
     my $ostype = $conf->{ostype};
     my $winversion = windows_version($ostype);
     my $kvm = $conf->{kvm};
+    my $lats = $conf->{lats};
     my $nodename = nodename();
 
     my $machine_conf = PVE::QemuServer::Machine::parse_machine($conf->{machine});
 
+    my $host_arch = get_host_arch();
     my $arch = PVE::QemuServer::Helpers::get_vm_arch($conf);
-    my $kvm_binary = PVE::QemuServer::Helpers::get_command_for_arch($arch);
+
+    if ($lats && !($host_arch eq 'loongarch64' && $arch eq 'x86_64')) {
+        die "LATS is only available when emulating x86_64 on loongarch64";
+    }
+
+    $lats //= 1 if ($host_arch eq 'loongarch64' && $arch eq 'x86_64');
+
+    my $kvm_binary = PVE::QemuServer::Helpers::get_command_for_arch($arch, $lats);
     my $kvmver = kvm_user_version($kvm_binary);
 
     if (!$kvmver || $kvmver !~ m/^(\d+)\.(\d+)/ || $1 < 6) {
@@ -3174,7 +3189,6 @@ sub config_to_command {
 
     my $machine_type = PVE::QemuServer::Machine::get_vm_machine($conf, $forcemachine);
     my $machine_version = extract_version($machine_type, $kvmver);
-    my $host_arch = get_host_arch();
     $kvm //= 1 if ($arch eq $host_arch && is_virtualization_supported_by_cpu($host_arch));
 
     $machine_version =~ m/(\d+)\.(\d+)/;
