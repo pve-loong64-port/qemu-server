@@ -1,3 +1,9 @@
+qemu-server (9.2.24+lats2) trixie; urgency=medium
+
+  * Make LATS optional and default when emulating x86_64 on loongarch64.
+
+ -- Kaiyang Wu <wukaiyang@loongfans.cn>  Thu, 26 Nov 2026 08:45:24 +0100
+
 qemu-server (9.2.24+lats1) trixie; urgency=medium
 
   * Add preliminary LATX-SYS support.
