@@ -35,16 +35,15 @@ sub get_host_arch {
     return PVE::Tools::get_host_arch();
 }
 
-sub get_command_for_arch($) {
-    my ($arch) = @_;
-
-    my $host_arch = get_host_arch();
-
-    return '/usr/bin/kvm' if $host_arch eq $arch; # i.e. native arch
+sub get_command_for_arch {
+    my ($arch, $lats) = @_;
+    return '/usr/bin/kvm' if get_host_arch() eq $arch; # i.e. native arch
 
     my $cmd = "";
 
-    if ($host_arch eq 'loongarch64' && $arch eq 'x86_64') {
+    $lats //= 0;
+
+    if ($lats) {
         $cmd = '/usr/bin/lats-x86_64';
     } else {
         $cmd = $arch_to_qemu_binary->{$arch}
